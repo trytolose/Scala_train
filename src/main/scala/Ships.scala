@@ -66,24 +66,44 @@
 
       val emptyField = Range(0, 10).toVector.map(_ => Range(0,10).map(_ => false).toVector)
 
-    val game: Game = (emptyField, Map())
+
 
     val ship_1 = List((1, 6), (1, 7), (1, 8))
     val ship_2 = List((2, 5), (3, 5), (4, 5), (5, 5))
     val ship_3 = List((9, 9))
 
-    val game_1 = tryAddShip(game, "BlackPearl", ship_1)
-//    printField(game_1._1)
-//    println("-----------------------------------")
 
-    val game_2 = tryAddShip(game_1, "MillenniumFalcon", ship_2)
-//    printField(game_2._1)
-//    println("-----------------------------------")
+    import scala.io.StdIn
 
-    val game_3 = tryAddShip(game_2, "Varyag", ship_3)
-//    printField(game_3._1)
-//    println("-----------------------------------")
+    def readWhileStream(count: Int, pairs: List[(String, Ship)] = List.empty): List[(String, Ship)] = {
 
+      def readSingleShip(len: Int, ship: Ship = List.empty ):Ship = {
+
+        if (len == 0) ship
+
+        else readSingleShip(len - 1, ship :+ (readLine().split(" ").map(_.toInt) match {case Array(a, b) => (a, b)}))
+      }
+
+      if (count == 0) pairs
+      else {
+        val first = readLine().split(" ")
+        readWhileStream(count-1, pairs :+ (first.head, readSingleShip(first.last.toInt)))
+      }
+
+    }
+
+
+
+    val game: Game = (emptyField, Map())
+    val count = scala.io.StdIn.readInt()
+    val newShips = readWhileStream(count)
+
+    def addShips(game: Game, ships: List[(String, Ship)]): Game = {
+      if (ships.size == 0) game
+      else addShips(tryAddShip(game, ships.head._1, ships.head._2), ships.tail)
+    }
+
+    addShips(game, newShips)
 
 
 
