@@ -2,7 +2,7 @@
 
 
 
-  object Main extends App{
+  object Main {
 //    def main(args: Array[String]) {
       type Point = (Int, Int)
       type Field = Vector[Vector[Boolean]]
