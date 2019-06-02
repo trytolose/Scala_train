@@ -40,6 +40,7 @@ import scala.util.Random
 
 object Cross extends App{
 
+// Функция для измерения времени выполнения
   def time[R](block: => R): R = {
     val t0 = System.nanoTime()
     val result = block    // call-by-name
@@ -48,35 +49,56 @@ object Cross extends App{
     result
   }
 
-  def crossVanil(points: List[Int], pairs: List[(Char, Char)]): (String, String) = {
-    if (points.isEmpty) (pairs.unzip._1.mkString(""), pairs.unzip._2.mkString(""))
+// Наивный вариант
+  def crossVanil(points: List[Int], pairs: List[(Char, Char)]): List[(Char, Char)]= {
+    if (points.isEmpty) pairs
     else crossVanil(points.drop(1), pairs.take(points.head) ++ pairs.drop(points.head).map(x => (x._2, x._1)))
   }
 
-  def crossV1(points: List[Int], pairs: List[(Char, Char)]): (String, String) = {
-    if (points.isEmpty) (pairs.unzip._1.mkString(""), pairs.unzip._2.mkString(""))
-    else crossV1(points.tail, pairs.drop(points.head).map(x => (x._2, x._1)):::pairs.take(points.head))
+
+  def crossV1(points: List[Int], pairs: List[(Char, Char)]): List[(Char, Char)] = {
+
+//  Функция, создающая сперва бинарную маску, длиной с хромосому, единицы в точках кроссинговера
+//  например List(0, 0, 0, 1, 0, 0, 1, 0)
+//  А после возвращает куммулятивную сумму этой маски
+//  например List(0, 0, 0, 1, 1, 1, 2, 2)
+
+    def generateCumMask(ids: List[Int], m: Int, acc: List[Int] = List.empty): List[Int] = {
+      if (m == 0) acc.scanLeft(0)(_+_).tail
+      else generateCumMask(ids, m-1, if(ids.contains(m-1)) 1 +: acc else 0 +: acc )
+    }
+
+//  Если созмещаем пары хромосом и куммулятивную маску, если в конкретной точке сумма нечетная, то меняем буквы местами
+
+    pairs.zip(generateCumMask(points, pairs.length)).map(x => if (x._2%2 != 0) (x._1._2,x._1._1) else x._1)
+
   }
 
-  def crossV2(points: List[Int], pairs: List[(Char, Char)]): (String, String) = {
-    if (points.isEmpty) (pairs.unzip._1.mkString(""), pairs.unzip._2.mkString(""))
-    else crossV2(points.tail, pairs.zipWithIndex.filter(t => t._2 >= points.head).map(x => (x._1._2, x._1._1)))
-  }
 
+//  Генерация хромосом для тестов
+  def generateData(chrLen: Int, crossCount: Int): (List[Int], List[(Char, Char)]) = {
 
-    def generateData(chrLen: Int, crossCount: Int): (List[Int], List[(Char, Char)]) = {
     val chr1 = Random.alphanumeric.take(chrLen).toList
     val chr2 = Random.alphanumeric.take(chrLen).toList
     val counts = Seq.fill(crossCount)(Random.nextInt(chrLen)).toList.distinct.sorted
     (counts, chr1 zip chr2)
   }
 
-  val (ids, pairs) = generateData(100000, 1000)
+  // длина строки = 100000, кол-во точек кроссоверинга <= 10000
+  val (ids, pairs) = generateData(100000, 10000)
+
+//  val pairs = List('x', 'x', 'x', 'x', 'x') zip List('y', 'y', 'y', 'y', 'y')
+//  val ids = List(1, 3)
 
 
-  time{crossVanil(ids, pairs)}      //Elapsed time: 3829.742557ms
-  time{crossV1(ids, pairs)}         //Elapsed time: 2245.928264ms
-  time{crossV2(ids, pairs)}         //Elapsed time: 184.950546ms
+
+
+
+
+
+  time{crossVanil(ids, pairs)}      //  Elapsed time: 24358.697572ms
+  time{crossV1(ids, pairs)}         //  Elapsed time: 3063.789309ms
+
 
 }
 
